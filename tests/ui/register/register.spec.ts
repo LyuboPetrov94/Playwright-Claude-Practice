@@ -13,9 +13,9 @@ import { RegisterPage } from '../../../pages/RegisterPage';
  *
  * Test cases:
  *   - Equivalence Partitioning: valid classes   (TC01–TC05)
- *   - Equivalence Partitioning: invalid classes  (TC06–TC12)
- *   - Boundary Value Analysis: username length   (TC13–TC16)
- *   - Boundary Value Analysis: password length   (TC17–TC18)
+ *   - Equivalence Partitioning: invalid classes  (TC06–TC16)
+ *   - Boundary Value Analysis: username length   (TC17–TC20)
+ *   - Boundary Value Analysis: password length   (TC21–TC22)
  */
 
 const PASSWORD = 'Pass1234';
@@ -105,7 +105,34 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC07 - Mismatched passwords shows error', async () => {
+  test('TC07 - Only username empty shows required error', async () => {
+    // EP: invalid class — single missing field (decision table)
+    await registerPage.register('', PASSWORD, PASSWORD);
+
+    await expect(registerPage.getFlashMessage()).toContainText(
+      'All fields are required.'
+    );
+  });
+
+  test('TC08 - Only password empty shows required error', async () => {
+    // EP: invalid class — single missing field (decision table)
+    await registerPage.register(`user${Date.now()}`, '', PASSWORD);
+
+    await expect(registerPage.getFlashMessage()).toContainText(
+      'All fields are required.'
+    );
+  });
+
+  test('TC09 - Only confirm password empty shows required error', async () => {
+    // EP: invalid class — single missing field (decision table)
+    await registerPage.register(`user${Date.now()}`, PASSWORD, '');
+
+    await expect(registerPage.getFlashMessage()).toContainText(
+      'All fields are required.'
+    );
+  });
+
+  test('TC10 - Mismatched passwords shows error', async () => {
     // EP: invalid class — confirm password ≠ password
     await registerPage.register(`user${Date.now()}`, PASSWORD, 'Different1');
 
@@ -114,7 +141,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC08 - Username with special characters shows error', async () => {
+  test('TC11 - Username with special characters shows error', async () => {
     // EP: invalid class — characters outside allowed set
     await registerPage.register('test@user!', PASSWORD, PASSWORD);
 
@@ -123,7 +150,16 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC09 - Username starting with hyphen shows error', async () => {
+  test('TC12 - Username with space shows error', async () => {
+    // EP: invalid class — space in username
+    await registerPage.register('test user', PASSWORD, PASSWORD);
+
+    await expect(registerPage.getFlashMessage()).toContainText(
+      'Invalid username'
+    );
+  });
+
+  test('TC13 - Username starting with hyphen shows error', async () => {
     // EP: invalid class — leading hyphen
     await registerPage.register('-testuser', PASSWORD, PASSWORD);
 
@@ -132,7 +168,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC10 - Username ending with hyphen shows error', async () => {
+  test('TC14 - Username ending with hyphen shows error', async () => {
     // EP: invalid class — trailing hyphen
     await registerPage.register('testuser-', PASSWORD, PASSWORD);
 
@@ -141,7 +177,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC11 - Username with consecutive hyphens shows error', async () => {
+  test('TC15 - Username with consecutive hyphens shows error', async () => {
     // EP: invalid class — double hyphens
     await registerPage.register('test--user', PASSWORD, PASSWORD);
 
@@ -150,7 +186,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC12 - Duplicate username shows error', async ({ page }) => {
+  test('TC16 - Duplicate username shows error', async ({ page }) => {
     // EP: invalid class — username already taken
     const username = `dup${Date.now().toString(36)}`;
 
@@ -169,7 +205,7 @@ test.describe('Registration', () => {
 
   // ─── Boundary Value Analysis: Username length (3–39) ──────────────────────
 
-  test('TC13 - Username with 2 characters is rejected', async () => {
+  test('TC17 - Username with 2 characters is rejected', async () => {
     // BVA: below minimum (3)
     await registerPage.register('ab', PASSWORD, PASSWORD);
 
@@ -178,7 +214,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC14 - Username with 3 characters is accepted', async ({ page }) => {
+  test('TC18 - Username with 3 characters is accepted', async ({ page }) => {
     // BVA: at minimum (3)
     const username = Date.now().toString(36).slice(-3);
     await registerPage.register(username, PASSWORD, PASSWORD);
@@ -189,7 +225,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC15 - Username with 39 characters is accepted', async ({ page }) => {
+  test('TC19 - Username with 39 characters is accepted', async ({ page }) => {
     // BVA: at maximum (39)
     const base = Date.now().toString(36);
     const username = base.repeat(5).slice(0, 39);
@@ -201,7 +237,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC16 - Username with 40 characters is rejected', async () => {
+  test('TC20 - Username with 40 characters is rejected', async () => {
     // BVA: above maximum (39)
     const username = 'a'.repeat(40);
     await registerPage.register(username, PASSWORD, PASSWORD);
@@ -213,7 +249,7 @@ test.describe('Registration', () => {
 
   // ─── Boundary Value Analysis: Password length (min 4) ─────────────────────
 
-  test('TC17 - Password with 3 characters is rejected', async () => {
+  test('TC21 - Password with 3 characters is rejected', async () => {
     // BVA: below minimum (4)
     await registerPage.register(`user${Date.now()}`, 'Ab1', 'Ab1');
 
@@ -222,7 +258,7 @@ test.describe('Registration', () => {
     );
   });
 
-  test('TC18 - Password with 4 characters is accepted', async ({ page }) => {
+  test('TC22 - Password with 4 characters is accepted', async ({ page }) => {
     // BVA: at minimum (4)
     await registerPage.register(`user${Date.now()}`, 'Ab1x', 'Ab1x');
 
