@@ -13,6 +13,7 @@ import { LoginPage } from '../../../pages/LoginPage';
  *   - Equivalence Partitioning: invalid classes  (TC03–TC08)
  *   - Decision Table: combined invalid inputs    (TC09)
  *   - Whitespace edge cases                      (TC10)
+ *   - State Transition: logout                   (TC11)
  */
 
 const VALID_USERNAME = 'practice';
@@ -33,8 +34,7 @@ test.describe('Login', () => {
     await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
 
     await expect(page).toHaveURL(/\/secure/);
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('You logged into a secure area!');
+    await expect(loginPage.getFlashMessage()).toContainText('You logged into a secure area!');
     await expect(loginPage.getLogoutButton()).toBeVisible();
   });
 
@@ -43,8 +43,7 @@ test.describe('Login', () => {
     await loginPage.login('Practice', VALID_PASSWORD);
 
     await expect(page).toHaveURL(/\/secure/);
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('You logged into a secure area!');
+    await expect(loginPage.getFlashMessage()).toContainText('You logged into a secure area!');
     await expect(loginPage.getLogoutButton()).toBeVisible();
   });
 
@@ -56,48 +55,42 @@ test.describe('Login', () => {
 
     // The site returns a generic password error regardless of which field is wrong —
     // a common security practice to avoid revealing valid usernames to attackers.
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your password is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your password is invalid!');
   });
 
   test('TC04 - Invalid password shows error', async () => {
     // EP: invalid class — wrong password for valid username
     await loginPage.login(VALID_USERNAME, 'wrongpassword');
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your password is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your password is invalid!');
   });
 
   test('TC05 - Both fields empty shows error', async () => {
     // EP: invalid class — empty inputs
     await loginPage.login('', '');
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your username is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your username is invalid!');
   });
 
   test('TC06 - Username empty shows error', async () => {
     // EP: invalid class — empty username with valid password
     await loginPage.login('', VALID_PASSWORD);
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your username is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your username is invalid!');
   });
 
   test('TC07 - Password empty shows error', async () => {
     // EP: invalid class — valid username with empty password
     await loginPage.login(VALID_USERNAME, '');
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your password is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your password is invalid!');
   });
 
   test('TC08 - Username with leading and trailing spaces shows error', async () => {
     // EP: invalid class — whitespace not trimmed by server
     await loginPage.login(' practice ', VALID_PASSWORD);
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your username is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your username is invalid!');
   });
 
   // ─── Decision Table: Combined invalid inputs ──────────────────────────────
@@ -106,8 +99,7 @@ test.describe('Login', () => {
     // Decision table: both fields wrong (non-empty) — server prioritises one error
     await loginPage.login('wronguser', 'wrongpassword');
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your password is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your password is invalid!');
   });
 
   // ─── Whitespace edge cases ────────────────────────────────────────────────
@@ -116,7 +108,23 @@ test.describe('Login', () => {
     // Whitespace: password is not trimmed — trailing space makes it invalid
     await loginPage.login(VALID_USERNAME, VALID_PASSWORD + ' ');
 
-    const message = await loginPage.getFlashMessage();
-    expect(message).toContain('Your password is invalid!');
+    await expect(loginPage.getFlashMessage()).toContainText('Your password is invalid!');
+  });
+
+  // ─── State Transition: Logout ─────────────────────────────────────────────
+
+  test('TC11 - Logout after successful login redirects to login page', async ({ page }) => {
+    // State Transition: logged-out → logged-in → logged-out
+    await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
+
+    await expect(page).toHaveURL(/\/secure/);
+    await expect(loginPage.getLogoutButton()).toBeVisible();
+
+    await loginPage.getLogoutButton().click();
+
+    await expect(page).toHaveURL(/\/login/);
+    await expect(loginPage.getFlashMessage()).toContainText(
+      'You logged out of the secure area!'
+    );
   });
 });

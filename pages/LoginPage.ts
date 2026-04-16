@@ -29,16 +29,11 @@ export class LoginPage {
     await this.submitButton.click();
   }
 
-  async getFlashMessage(): Promise<string | null> {
-    await this.flashMessage.waitFor({ state: 'visible' });
-    return this.flashMessage.textContent();
+  getFlashMessage(): Locator {
+    return this.flashMessage;
   }
 
   getLogoutButton(): Locator {
     return this.logoutButton;
-  }
-
-  async getCurrentUrl(): Promise<string> {
-    return this.page.url();
   }
 }
