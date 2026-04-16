@@ -101,7 +101,6 @@ test.describe('Web Inputs', () => {
   test('TC08 - Date: valid date is accepted and displayed', async () => {
     // Equivalence class: valid date
     // Playwright requires YYYY-MM-DD for date inputs (HTML standard)
-    // Output format is YYYY/MM/DD
     await inputsPage.fillDate('2024-06-15');
     await inputsPage.clickDisplay();
 
@@ -112,7 +111,6 @@ test.describe('Web Inputs', () => {
     // Equivalence class: invalid date partition
     // Browser normalises out-of-range values to the last valid date of the year.
     // pressSequentially bypasses Playwright's format validation on date inputs.
-    // Output format is YYYY/MM/DD
     await inputsPage.pressDateSequentially('15/35/2024');
     await inputsPage.clickDisplay();
 
