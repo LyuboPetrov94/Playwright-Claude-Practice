@@ -1,0 +1,44 @@
+import { Page, Locator } from '@playwright/test';
+
+export class LoginPage {
+  private readonly usernameInput: Locator;
+  private readonly passwordInput: Locator;
+  private readonly submitButton: Locator;
+  private readonly flashMessage: Locator;
+  private readonly logoutButton: Locator;
+
+  constructor(private page: Page) {
+    this.usernameInput = page.locator('#username');
+    this.passwordInput = page.locator('#password');
+    this.submitButton = page.locator('#submit-login');
+    this.flashMessage = page.locator('#flash');
+    this.logoutButton = page.locator('a[href="/logout"]');
+  }
+
+  async goto() {
+    await this.page.goto('/login');
+  }
+
+  async login(username: string, password: string) {
+    // Use clear() before fill() to ensure the field is truly empty across all browsers,
+    // particularly WebKit which handles fill('') differently on autocomplete fields.
+    await this.usernameInput.clear();
+    await this.usernameInput.fill(username);
+    await this.passwordInput.clear();
+    await this.passwordInput.fill(password);
+    await this.submitButton.click();
+  }
+
+  async getFlashMessage(): Promise<string | null> {
+    await this.flashMessage.waitFor({ state: 'visible' });
+    return this.flashMessage.textContent();
+  }
+
+  getLogoutButton(): Locator {
+    return this.logoutButton;
+  }
+
+  async getCurrentUrl(): Promise<string> {
+    return this.page.url();
+  }
+}
