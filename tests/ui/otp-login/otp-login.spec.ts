@@ -16,7 +16,7 @@ import { OtpLoginPage } from '../../../pages/OtpLoginPage';
  *
  * Test cases:
  *   - Email submission  (TC01–TC06)
- *   - OTP verification  (TC07–TC09)
+ *   - OTP verification  (TC07–TC11)
  */
 
 const VALID_EMAIL = 'practice@expandtesting.com';
@@ -119,6 +119,30 @@ test.describe('OTP Login', () => {
       await otpLoginPage.submitEmptyOtp();
 
       await expect(otpLoginPage.getValidationFeedback()).toBeVisible();
+    });
+
+    test('TC10 - OTP with fewer than 6 digits shows error', async () => {
+      // EP: invalid class — short OTP (may trigger client-side pattern validation)
+      await otpLoginPage.submitOtp('123');
+
+      await expect(otpLoginPage.getOtpMessage()).toContainText(
+        'The provided OTP code is incorrect. Please check your code and try again.'
+      );
+    });
+
+    test('TC11 - Logout after successful OTP login redirects to login page', async ({ page }) => {
+      // State Transition: logged-out → email → OTP → logged-in → logged-out
+      await otpLoginPage.submitOtp(VALID_OTP);
+
+      await expect(page).toHaveURL(/\/secure/);
+      await expect(otpLoginPage.getLogoutButton()).toBeVisible();
+
+      await otpLoginPage.getLogoutButton().click();
+
+      await expect(page).toHaveURL(/\/login/);
+      await expect(otpLoginPage.getFlashMessage()).toContainText(
+        'You logged out of the secure area!'
+      );
     });
   });
 });
