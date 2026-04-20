@@ -9,7 +9,6 @@ export class DynamicPaginationTablePage {
   private readonly infoText: Locator;
   private readonly previousButton: Locator;
   private readonly nextButton: Locator;
-  private readonly paginationButtons: Locator;
   private readonly emptyRow: Locator;
 
   constructor(private page: Page) {
@@ -21,7 +20,6 @@ export class DynamicPaginationTablePage {
     this.infoText = page.locator('#example_info');
     this.previousButton = page.locator('#example_previous');
     this.nextButton = page.locator('#example_next');
-    this.paginationButtons = page.locator('#example_paginate .page-item');
     this.emptyRow = this.table.locator('tbody td.dataTables_empty');
   }
 
@@ -108,24 +106,10 @@ export class DynamicPaginationTablePage {
     return values;
   }
 
-  /** Returns all visible rows as arrays of cell text. */
-  async getVisibleRows(): Promise<string[][]> {
-    const rows = await this.tableRows.all();
-    const data: string[][] = [];
-    for (const row of rows) {
-      data.push(await row.locator('td').allTextContents());
-    }
-    return data;
-  }
-
   // ─── Output Locators ─────────────────────────────────────────────────────────
 
   getInfoText(): Locator {
     return this.infoText;
-  }
-
-  getTable(): Locator {
-    return this.table;
   }
 
   getTableRows(): Locator {
@@ -134,9 +118,5 @@ export class DynamicPaginationTablePage {
 
   getEmptyRow(): Locator {
     return this.emptyRow;
-  }
-
-  getPaginationButtons(): Locator {
-    return this.paginationButtons;
   }
 }
