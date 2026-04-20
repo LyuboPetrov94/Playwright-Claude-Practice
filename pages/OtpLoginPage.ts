@@ -29,7 +29,7 @@ export class OtpLoginPage {
   }
 
   async goto() {
-    await this.page.goto('/otp-login');
+    await this.page.goto('/otp-login', { waitUntil: 'domcontentloaded' });
   }
 
   async submitEmail(email: string) {

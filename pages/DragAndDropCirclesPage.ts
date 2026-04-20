@@ -12,7 +12,7 @@ export class DragAndDropCirclesPage {
   }
 
   async goto() {
-    await this.page.goto('/drag-and-drop-circles');
+    await this.page.goto('/drag-and-drop-circles', { waitUntil: 'domcontentloaded' });
   }
 
   // ─── Getters ───────────────────────────────────────────────────────────────

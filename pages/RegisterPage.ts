@@ -16,7 +16,7 @@ export class RegisterPage {
   }
 
   async goto() {
-    await this.page.goto('/register');
+    await this.page.goto('/register', { waitUntil: 'domcontentloaded' });
   }
 
   async register(username: string, password: string, confirmPassword: string) {

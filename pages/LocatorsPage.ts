@@ -82,7 +82,7 @@ export class LocatorsPage {
   }
 
   async goto() {
-    await this.page.goto('/locators');
+    await this.page.goto('/locators', { waitUntil: 'domcontentloaded' });
   }
 
   // ─── getByRole ─────────────────────────────────────────────────────────────

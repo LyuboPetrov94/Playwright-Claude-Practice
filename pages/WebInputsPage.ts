@@ -32,7 +32,7 @@ export class WebInputsPage {
   }
 
   async goto() {
-    await this.page.goto('/inputs');
+    await this.page.goto('/inputs', { waitUntil: 'domcontentloaded' });
   }
 
   async fillNumber(value: string) {

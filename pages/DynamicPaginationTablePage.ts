@@ -26,7 +26,7 @@ export class DynamicPaginationTablePage {
   }
 
   async goto() {
-    await this.page.goto('/dynamic-pagination-table');
+    await this.page.goto('/dynamic-pagination-table', { waitUntil: 'domcontentloaded' });
   }
 
   // ─── Pagination ──────────────────────────────────────────────────────────────

@@ -28,7 +28,7 @@ export class RadioButtonsPage {
   }
 
   async goto() {
-    await this.page.goto('/radio-buttons');
+    await this.page.goto('/radio-buttons', { waitUntil: 'domcontentloaded' });
   }
 
   // ─── Color Getters ─────────────────────────────────────────────────────────

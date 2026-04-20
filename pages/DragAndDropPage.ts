@@ -14,7 +14,7 @@ export class DragAndDropPage {
   }
 
   async goto() {
-    await this.page.goto('/drag-and-drop');
+    await this.page.goto('/drag-and-drop', { waitUntil: 'domcontentloaded' });
   }
 
   // ─── Getters ───────────────────────────────────────────────────────────────

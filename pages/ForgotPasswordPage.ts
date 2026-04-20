@@ -16,7 +16,7 @@ export class ForgotPasswordPage {
   }
 
   async goto() {
-    await this.page.goto('/forgot-password');
+    await this.page.goto('/forgot-password', { waitUntil: 'domcontentloaded' });
   }
 
   async submitEmail(email: string) {
