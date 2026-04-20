@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator } from "@playwright/test";
 
 export class DynamicTablePage {
   private readonly table: Locator;
@@ -7,18 +7,18 @@ export class DynamicTablePage {
   private readonly chromeCpuLabel: Locator;
 
   constructor(private page: Page) {
-    this.table = page.locator('table.table');
-    this.tableHeaders = this.table.locator('thead th');
-    this.tableRows = this.table.locator('tbody tr');
-    this.chromeCpuLabel = page.locator('#chrome-cpu');
+    this.table = page.locator("table.table");
+    this.tableHeaders = this.table.locator("thead th");
+    this.tableRows = this.table.locator("tbody tr");
+    this.chromeCpuLabel = page.locator("#chrome-cpu");
   }
 
   async goto() {
-    await this.page.goto('/dynamic-table');
+    await this.page.goto("/dynamic-table", { waitUntil: "domcontentloaded" });
   }
 
   async reload() {
-    await this.page.reload();
+    await this.page.reload({ waitUntil: "domcontentloaded" });
   }
 
   /** Returns the text content of all column headers in their current order. */
@@ -29,11 +29,11 @@ export class DynamicTablePage {
   /** Returns the text content of the Name column for every row, in current order. */
   async getProcessNames(): Promise<string[]> {
     const headers = await this.getColumnHeaders();
-    const nameColIndex = headers.indexOf('Name');
+    const nameColIndex = headers.indexOf("Name");
     const rows = await this.tableRows.all();
     const names: string[] = [];
     for (const row of rows) {
-      const cells = await row.locator('td').allTextContents();
+      const cells = await row.locator("td").allTextContents();
       names.push(cells[nameColIndex]);
     }
     return names;
@@ -47,12 +47,14 @@ export class DynamicTablePage {
     const headers = await this.getColumnHeaders();
     const colIndex = headers.indexOf(columnName);
     if (colIndex === -1) {
-      throw new Error(`Column "${columnName}" not found. Available: ${headers.join(', ')}`);
+      throw new Error(
+        `Column "${columnName}" not found. Available: ${headers.join(", ")}`,
+      );
     }
 
     const rows = await this.tableRows.all();
     for (const row of rows) {
-      const cells = await row.locator('td').allTextContents();
+      const cells = await row.locator("td").allTextContents();
       if (cells.includes(processName)) {
         return cells[colIndex];
       }
@@ -65,7 +67,7 @@ export class DynamicTablePage {
     const rows = await this.tableRows.all();
     const allValues: string[][] = [];
     for (const row of rows) {
-      allValues.push(await row.locator('td').allTextContents());
+      allValues.push(await row.locator("td").allTextContents());
     }
     return allValues;
   }
@@ -78,31 +80,15 @@ export class DynamicTablePage {
       // Runs in the browser — extract only the element's direct text nodes,
       // ignoring child elements (ads/links injected into the label).
       (el) => {
-        let result = '';
+        let result = "";
         for (let i = 0; i < el.childNodes.length; i++) {
           const node = el.childNodes[i];
           if (node.nodeType === 3) result += node.textContent;
         }
         return result;
-      }
+      },
     );
     const match = text.match(/Chrome CPU:\s*(.+)/);
-    return match ? match[1].trim() : '';
-  }
-
-  getChromeCpuLabel(): Locator {
-    return this.chromeCpuLabel;
-  }
-
-  getTable(): Locator {
-    return this.table;
-  }
-
-  getTableHeaders(): Locator {
-    return this.tableHeaders;
-  }
-
-  getTableRows(): Locator {
-    return this.tableRows;
+    return match ? match[1].trim() : "";
   }
 }
