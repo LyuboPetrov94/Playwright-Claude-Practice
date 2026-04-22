@@ -19,6 +19,14 @@ export class LoginPage {
     await this.page.goto('/login', { waitUntil: 'domcontentloaded' });
   }
 
+  async gotoSecure() {
+    await this.page.goto('/secure', { waitUntil: 'domcontentloaded' });
+  }
+
+  async reload() {
+    await this.page.reload({ waitUntil: 'domcontentloaded' });
+  }
+
   async login(username: string, password: string) {
     // Use clear() before fill() to ensure the field is truly empty across all browsers,
     // particularly WebKit which handles fill('') differently on autocomplete fields.

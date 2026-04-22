@@ -14,6 +14,9 @@ import { LoginPage } from '../../../pages/LoginPage';
  *   - Decision Table: combined invalid inputs    (TC09)
  *   - Whitespace edge cases                      (TC10)
  *   - State Transition: logout                   (TC11)
+ *   - State Transition: protected-route access   (TC12–TC13)
+ *   - Equivalence Partitioning: password case    (TC14)
+ *   - State Transition: session persistence      (TC15)
  */
 
 const VALID_USERNAME = 'practice';
@@ -126,5 +129,57 @@ test.describe('Login', () => {
     await expect(loginPage.getFlashMessage()).toContainText(
       'You logged out of the secure area!'
     );
+  });
+
+  // ─── State Transition: Protected-route access ─────────────────────────────
+
+  test('TC12 - Guest navigating to /secure is redirected to /login', async ({ page }) => {
+    // State Transition: guest → /secure → /login
+    await loginPage.gotoSecure();
+
+    await expect(page).toHaveURL(/\/login/);
+    await expect(loginPage.getFlashMessage()).toContainText(
+      'You must login to view the secure area!'
+    );
+  });
+
+  test('TC13 - After logout, /secure is no longer accessible', async ({ page }) => {
+    // State Transition: verifies logout actually invalidates the session,
+    // not just performs a visual redirect.
+    await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
+    await expect(page).toHaveURL(/\/secure/);
+
+    await loginPage.getLogoutButton().click();
+    await expect(page).toHaveURL(/\/login/);
+
+    await loginPage.gotoSecure();
+    await expect(page).toHaveURL(/\/login/);
+    await expect(loginPage.getFlashMessage()).toContainText(
+      'You must login to view the secure area!'
+    );
+  });
+
+  // ─── Equivalence Partitioning: Password case-sensitivity ──────────────────
+
+  test('TC14 - Password in wrong case is rejected (password is case-sensitive)', async () => {
+    // EP: complements TC02. Username is case-insensitive on the server;
+    // this test pins that password is NOT.
+    await loginPage.login(VALID_USERNAME, VALID_PASSWORD.toLowerCase());
+
+    await expect(loginPage.getFlashMessage()).toContainText('Your password is invalid!');
+  });
+
+  // ─── State Transition: Session persistence ────────────────────────────────
+
+  test('TC15 - Session persists across a reload of /secure', async ({ page }) => {
+    // State Transition: logged-in → reload → still logged-in.
+    await loginPage.login(VALID_USERNAME, VALID_PASSWORD);
+    await expect(page).toHaveURL(/\/secure/);
+    await expect(loginPage.getLogoutButton()).toBeVisible();
+
+    await loginPage.reload();
+
+    await expect(page).toHaveURL(/\/secure/);
+    await expect(loginPage.getLogoutButton()).toBeVisible();
   });
 });
