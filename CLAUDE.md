@@ -30,6 +30,7 @@ Before writing any code for a new feature:
 - Always use the **Page Object Model (POM)** pattern — selectors and actions belong in `pages/`, never directly in test files
 - Tests import `test` and `expect` from `fixtures/index.ts`, not directly from `@playwright/test`
 - Use `locator.clear()` before `locator.fill()` to ensure consistent behaviour across all browsers
+- All POM `goto()` and `reload()` methods must pass `{ waitUntil: 'domcontentloaded' }` — see the ad-iframe gotcha below
 - Prefer `page.locator('#id')` for stable IDs, `page.getByRole()` for semantic elements
 - Keep test files named `<feature>.spec.ts`
 - TC numbers must be sequential within a spec file — reorder and renumber when tests are added or removed
@@ -92,6 +93,8 @@ Use assertions in this order of preference:
 - **Registration username normalisation**: The server silently converts uppercase usernames to lowercase during registration. Despite the error message stating "lowercase letters only", uppercase input succeeds.
 - **DataTables search clearing**: DataTables listens on the `input` event for its search box. Playwright's `clear()` and `fill('')` do not reliably trigger this event. Use `clear()` followed by `dispatchEvent('input')` to ensure DataTables re-renders the unfiltered table.
 - **Ad/link injection in elements**: The practice site injects ad links inside page elements (e.g. `#chrome-cpu` label). Using `textContent()` picks up child element text. Use `evaluate()` to extract only direct text nodes when an element may contain injected children.
+- **Third-party ad iframes block the `load` event**: The practice site embeds Google DoubleClick ad iframes that can delay or never complete loading. Playwright's default `page.goto()` and `page.reload()` wait for `waitUntil: 'load'`, which will time out at 30 s while waiting for the ad network. Always pass `{ waitUntil: 'domcontentloaded' }` to `goto()` and `reload()` in every POM — the DOM is ready long before the ads.
+- **Ad iframes pollute `page.on('console', ...)` output**: The same ad iframes emit `ERR_BLOCKED_BY_CLIENT` errors and occasional `log`/`warning` messages unrelated to the SUT. Any test that asserts on console output must filter by message shape (e.g. regex on the app's known prefix, or `msg.type()` match) or risk counting ad-iframe noise as app events. See `tests/ui/console-logs/console-logs.spec.ts` (`isAppMessage` helper) for the pattern.
 - **HTML5 drag-and-drop**: Playwright's `dragTo()` targets the centre of the drop zone, which can land on already-dropped child elements that lack a `drop` listener. Use manual `DataTransfer` event dispatch via `page.evaluate()` to fire `dragstart`/`dragover`/`drop`/`dragend` directly on the correct source and target elements. The `tsconfig.json` includes `"dom"` in `lib` to support browser API types inside `evaluate()`.
 - **Missing `for` attribute on labels**: Some practice site labels omit the `for` attribute (e.g. Green radio button on `/radio-buttons`). Use parent-relative locators (`#id` → `..` → `.form-check-label`) instead of `label[for="id"]`.
 
