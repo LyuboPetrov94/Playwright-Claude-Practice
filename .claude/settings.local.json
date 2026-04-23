@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:practice.expandtesting.com)"
+      "WebFetch(domain:practice.expandtesting.com)",
+      "Bash(curl -s https://practice.expandtesting.com/register)",
+      "Bash(curl -s https://practice.expandtesting.com/script/script.js)",
+      "Bash(curl -s -X POST https://practice.expandtesting.com/authenticate -d 'username=practice&password=SuperSecretPassword!' -c /tmp/cookies.txt -L)",
+      "Bash(curl -s -X POST https://practice.expandtesting.com/authenticate -d 'username=%20%20&password=SuperSecretPassword!' -D -)",
+      "Bash(curl -sL https://practice.expandtesting.com/add-remove-elements -o /tmp/add-remove.html)",
+      "Bash(npx tsc *)",
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_snapshot"
     ]
-  }
+  },
+  "enabledMcpjsonServers": ["playwright"],
+  "enableAllProjectMcpServers": true
 }
