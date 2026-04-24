@@ -18,7 +18,7 @@ pages/                # Page Object Models (one class per page/component)
 fixtures/             # Custom Playwright fixtures (shared setup/teardown)
 helpers/              # Utility functions (data generators, API wrappers)
 test-artifacts/       # Runtime-generated test files, one subfolder per feature
-                      # (gitignored; specs create in beforeAll, remove in afterAll)
+                      # (gitignored; created in global-setup.ts, removed in global-teardown.ts)
 ```
 
 ## Workflow
