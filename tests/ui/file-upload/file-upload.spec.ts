@@ -1,7 +1,12 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { test, expect } from '../../../fixtures';
 import { FileUploadPage } from '../../../pages/FileUploadPage';
+import {
+  SMALL_TXT,
+  SMALL_PNG,
+  KB_499,
+  KB_500,
+  KB_501,
+} from './artifacts';
 
 /**
  * File Upload tests for https://practice.expandtesting.com/upload
@@ -24,32 +29,10 @@ import { FileUploadPage } from '../../../pages/FileUploadPage';
  *   - Recovery after error    (TC07–TC08)
  */
 
-const ARTIFACTS_DIR = path.join(process.cwd(), 'test-artifacts', 'upload');
-const SMALL_TXT = path.join(ARTIFACTS_DIR, 'small.txt');
-const SMALL_PNG = path.join(ARTIFACTS_DIR, 'small.png');
-const KB_499 = path.join(ARTIFACTS_DIR, '499kb.txt');
-const KB_500 = path.join(ARTIFACTS_DIR, '500kb.txt');
-const KB_501 = path.join(ARTIFACTS_DIR, '501kb.txt');
-
 const SIZE_ERROR = 'File too large, please select a file less than 500KB';
 
 test.describe('File Upload', () => {
   let fileUploadPage: FileUploadPage;
-
-  test.beforeAll(() => {
-    // Buffer.alloc(n) produces a file of exactly n bytes. The upload form
-    // rounds sizeBytes / 1024 via Math.round, so N * 1024 lands on rounded KB = N.
-    fs.mkdirSync(ARTIFACTS_DIR, { recursive: true });
-    fs.writeFileSync(SMALL_TXT, Buffer.alloc(16));
-    fs.writeFileSync(SMALL_PNG, Buffer.alloc(16));
-    fs.writeFileSync(KB_499, Buffer.alloc(499 * 1024));
-    fs.writeFileSync(KB_500, Buffer.alloc(500 * 1024));
-    fs.writeFileSync(KB_501, Buffer.alloc(501 * 1024));
-  });
-
-  test.afterAll(() => {
-    fs.rmSync(ARTIFACTS_DIR, { recursive: true, force: true });
-  });
 
   test.beforeEach(async ({ page }) => {
     fileUploadPage = new FileUploadPage(page);
