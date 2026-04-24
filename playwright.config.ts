@@ -4,6 +4,12 @@ export default defineConfig({
   // Directory where tests live
   testDir: './tests',
 
+  // One-time setup/teardown for the whole test run (runs before/after all
+  // workers). Used to generate test-artifacts/ fixture files in a single
+  // process, avoiding races between parallel project workers.
+  globalSetup: './global-setup',
+  globalTeardown: './global-teardown',
+
   // Run tests in parallel
   fullyParallel: true,
 
