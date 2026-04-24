@@ -17,6 +17,8 @@ tests/
 pages/                # Page Object Models (one class per page/component)
 fixtures/             # Custom Playwright fixtures (shared setup/teardown)
 helpers/              # Utility functions (data generators, API wrappers)
+test-artifacts/       # Runtime-generated test files, one subfolder per feature
+                      # (gitignored; specs create in beforeAll, remove in afterAll)
 ```
 
 ## Workflow
@@ -59,6 +61,7 @@ Divide inputs into valid and invalid equivalence classes. Write one test per cla
 ### Boundary Value Analysis (3-point)
 For any range or limit, test three points: just below, at, and just above the boundary.
 - Example for a field with max 20 characters: 19 chars (below), 20 chars (at boundary), 21 chars (above)
+- Keep all three points even when "at" and "above" produce the same outcome (e.g. both rejected). The points document the boundary's shape, not only outcome diversity — this technique wins over the "distinct outcomes" decision-table rule when they conflict.
 
 ### Decision Table
 For features with multiple input conditions that combine to produce different outcomes, map all combinations in a table before writing tests.
@@ -81,6 +84,13 @@ Use assertions in this order of preference:
 - `toBeVisible()` / `toBeHidden()` — only when the element is genuinely expected to appear or disappear from view
 - Never use `textContent()` directly in assertions — it does not auto-retry and will time out on dynamic content
 
+## Unused Code Check
+After writing a POM or spec file, scan it for unused methods, functions, exports, or variables before marking the task complete. Do not silently delete — for each unused item:
+1. Identify why it went unused. Was it written speculatively, or does it point to a gap — a missed test case, a missing assertion, an incomplete flow, or a boundary the spec skipped?
+2. If it maps to a gap, surface it and propose the missing test. Prefer adding the test over removing the helper.
+3. If it is genuinely redundant (duplicate of an existing helper, or covers behaviour that is out of scope by design), flag it and propose deletion for explicit confirmation before removing.
+4. Report the findings as part of the task summary so the decision is visible, not hidden in the diff.
+
 ## Known Gotchas (learned from practice site)
 
 - **Date input format**: `locator.fill()` on `<input type="date">` requires `YYYY-MM-DD` format. Playwright must use the HTML standard format or it throws `Malformed value`. The practice site also outputs dates in `YYYY-MM-DD` format.
@@ -90,6 +100,7 @@ Use assertions in this order of preference:
 - **Bootstrap client-side validation**: Several forms use `class="needs-validation"` with `novalidate` and a `form-validation.js` script. This creates two validation layers: client-side (Bootstrap + HTML5 `checkValidity()`, shows `.invalid-feedback`) and server-side (flash messages after redirect). Tests must cover both layers — the form does not submit when client-side validation fails.
 - **Flash messages**: Server-side errors and notices use `#flash` inside `#flash-message`. Error flashes use `alert-danger`, success uses `alert-success`, notices use `alert-info`. Flash messages appear after 302 redirects via session cookies.
 - **Server validation inconsistency**: Email validation differs across endpoints. The forgot-password page rejects emails without a TLD (e.g. `user@domain`), but the OTP login page accepts them. Always probe each endpoint — do not assume identical validation rules.
+- **OTP login has one hard-coded email/code pair**: `/otp-login` does not send real emails. Only `practice@expandtesting.com` + `214365` reaches `/secure`. Step 1 accepts any well-formed email (non-TLD, non-existent, whitespace-padded) and advances to step 2, but step 2 will always return "The provided OTP code is incorrect." unless the canonical pair is used. Do not design tests that try to reach `/secure` via OTP with any other email — the two steps' input classes are *not* composable.
 - **Registration username normalisation**: The server silently converts uppercase usernames to lowercase during registration. Despite the error message stating "lowercase letters only", uppercase input succeeds.
 - **DataTables search clearing**: DataTables listens on the `input` event for its search box. Playwright's `clear()` and `fill('')` do not reliably trigger this event. Use `clear()` followed by `dispatchEvent('input')` to ensure DataTables re-renders the unfiltered table.
 - **Ad/link injection in elements**: The practice site injects ad links inside page elements (e.g. `#chrome-cpu` label). Using `textContent()` picks up child element text. Use `evaluate()` to extract only direct text nodes when an element may contain injected children.
@@ -97,6 +108,7 @@ Use assertions in this order of preference:
 - **Ad iframes pollute `page.on('console', ...)` output**: The same ad iframes emit `ERR_BLOCKED_BY_CLIENT` errors and occasional `log`/`warning` messages unrelated to the SUT. Any test that asserts on console output must filter by message shape (e.g. regex on the app's known prefix, or `msg.type()` match) or risk counting ad-iframe noise as app events. See `tests/ui/console-logs/console-logs.spec.ts` (`isAppMessage` helper) for the pattern.
 - **HTML5 drag-and-drop**: Playwright's `dragTo()` targets the centre of the drop zone, which can land on already-dropped child elements that lack a `drop` listener. Use manual `DataTransfer` event dispatch via `page.evaluate()` to fire `dragstart`/`dragover`/`drop`/`dragend` directly on the correct source and target elements. The `tsconfig.json` includes `"dom"` in `lib` to support browser API types inside `evaluate()`.
 - **Missing `for` attribute on labels**: Some practice site labels omit the `for` attribute (e.g. Green radio button on `/radio-buttons`). Use parent-relative locators (`#id` → `..` → `.form-check-label`) instead of `label[for="id"]`.
+- **Native HTML5 required-validation popover consumes the next click**: After a submit attempt is blocked by an HTML5 `required` field, Chromium keeps the native validation popover active. The next click on the submit button — even once the field is filled — can be consumed by the popover dismissal rather than triggering form submission. In state-transition tests that chain *(blocked submit → fill field → submit)*, press `Escape` between the two submits to clear the popover explicitly. See `tests/ui/file-upload/file-upload.spec.ts` TC08 for the pattern. Does not apply to forms using Bootstrap's `novalidate` + `needs-validation` pattern (which replaces native validation with DOM-rendered `.invalid-feedback`).
 
 ## What NOT to Do
 - Do not write selectors directly in test files
