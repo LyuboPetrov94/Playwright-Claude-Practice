@@ -1,4 +1,5 @@
 import { Page, Locator, type Download } from '@playwright/test';
+import { triggerDownload } from '../helpers/downloads';
 
 // The /download page lists 13 files, but 8 are timestamped uploads that
 // rotate as users add more via /upload. Only these 5 are stable enough to
@@ -25,14 +26,8 @@ export class FileDownloadPage {
     return this.page.getByRole('link', { name: filename, exact: true });
   }
 
-  // Canonical Promise.all + waitForEvent('download') pattern. Returns the
-  // Download so the caller can saveAs / inspect / read the bytes.
   async downloadFile(filename: string): Promise<Download> {
-    const [download] = await Promise.all([
-      this.page.waitForEvent('download'),
-      this.fileLink(filename).click(),
-    ]);
-    return download;
+    return triggerDownload(this.page, this.fileLink(filename));
   }
 
   // Used when a test needs to compare the anchor's href with download.url().
