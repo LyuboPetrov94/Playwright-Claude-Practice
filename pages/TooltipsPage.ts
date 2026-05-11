@@ -3,7 +3,6 @@ import { Page, Locator } from '@playwright/test';
 // Plain-text trigger buttons (#btn1..#btn4). #btn5 has data-bs-html=true
 // and is treated as a separate EP class — kept out of this tuple.
 export const TEXT_TOOLTIP_BUTTON_IDS = [1, 2, 3, 4] as const;
-export type TextTooltipButtonId = typeof TEXT_TOOLTIP_BUTTON_IDS[number];
 
 // Includes #btn5 — used by the mouse-leave state transition test that
 // covers every button.
