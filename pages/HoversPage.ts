@@ -39,6 +39,13 @@ export class HoversPage {
   }
 
   async hoverUser(id: UserId) {
+    // Settle the figure into the viewport first. Hovering causes the
+    // .figcaption to switch from display:none to display:block, which
+    // grows the figure's height. If a later click needs to scroll the
+    // caption into view, the layout shift moves the figure under the
+    // mouse — :hover is lost, .figcaption hides, and the click target
+    // disappears. Pre-scrolling avoids the race entirely.
+    await this.getFigure(id).scrollIntoViewIfNeeded();
     await this.getFigure(id).hover();
   }
 }
