@@ -107,14 +107,21 @@ test.describe('Web Inputs', () => {
     await expect(inputsPage.getDateOutput()).toHaveText('2024-06-15');
   });
 
-  test('TC09 - Date: invalid date is normalised to last day of the year', async () => {
-    // Equivalence class: invalid date partition
-    // Browser normalises out-of-range values to the last valid date of the year.
+  test('TC09 - Date: invalid date entry behaviour differs per browser', async ({ browserName }) => {
+    // Equivalence class: invalid date partition.
     // pressSequentially bypasses Playwright's format validation on date inputs.
+    // Browser-defined outcome differs:
+    //  - Chromium / WebKit: normalise out-of-range parts → last valid day of the year.
+    //  - Firefox:           reject each invalid segment; only the year commits,
+    //                       so input.value remains empty and the output stays blank.
     await inputsPage.pressDateSequentially('15/35/2024');
     await inputsPage.clickDisplay();
 
-    await expect(inputsPage.getDateOutput()).toHaveText('2024-12-31');
+    if (browserName === 'firefox') {
+      await expect(inputsPage.getDateOutput()).toHaveText('');
+    } else {
+      await expect(inputsPage.getDateOutput()).toHaveText('2024-12-31');
+    }
   });
 
   // ─── Buttons ───────────────────────────────────────────────────────────────

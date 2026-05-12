@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class WebInputsPage {
   private readonly numberInput: Locator;
@@ -36,23 +36,23 @@ export class WebInputsPage {
   }
 
   async fillNumber(value: string) {
-    await this.numberInput.clear();
     await this.numberInput.fill(value);
+    await expect(this.numberInput).toHaveValue(value);
   }
 
   async fillText(value: string) {
-    await this.textInput.clear();
     await this.textInput.fill(value);
+    await expect(this.textInput).toHaveValue(value);
   }
 
   async fillPassword(value: string) {
-    await this.passwordInput.clear();
     await this.passwordInput.fill(value);
+    await expect(this.passwordInput).toHaveValue(value);
   }
 
   async fillDate(value: string) {
-    await this.dateInput.clear();
     await this.dateInput.fill(value);
+    await expect(this.dateInput).toHaveValue(value);
   }
 
   // Use for invalid date strings that Playwright's fill() would reject.
