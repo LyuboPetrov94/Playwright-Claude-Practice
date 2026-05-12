@@ -57,9 +57,7 @@ export class ConsoleLogsPage {
   }
 
   async fillInput(level: LogLevel, text: string) {
-    const input = this.getInput(level);
-    await input.clear();
-    await input.fill(text);
+    await this.getInput(level).fill(text);
   }
 
   async clearInput(level: LogLevel) {

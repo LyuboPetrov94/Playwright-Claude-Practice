@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export type PaymentMethod = 'cashondelivery' | 'card';
 
@@ -47,18 +47,18 @@ export class FormValidationPage {
   }
 
   async setContactName(value: string) {
-    await this.contactNameInput.clear();
     await this.contactNameInput.fill(value);
+    await expect(this.contactNameInput).toHaveValue(value);
   }
 
   async setContactNumber(value: string) {
-    await this.contactNumberInput.clear();
     await this.contactNumberInput.fill(value);
+    await expect(this.contactNumberInput).toHaveValue(value);
   }
 
   async setPickUpDate(value: string) {
-    await this.pickUpDateInput.clear();
     await this.pickUpDateInput.fill(value);
+    await expect(this.pickUpDateInput).toHaveValue(value);
   }
 
   async setPayment(value: PaymentMethod) {
@@ -94,14 +94,6 @@ export class FormValidationPage {
 
   getContactNameInput(): Locator {
     return this.contactNameInput;
-  }
-
-  getContactNumberInput(): Locator {
-    return this.contactNumberInput;
-  }
-
-  getPickUpDateInput(): Locator {
-    return this.pickUpDateInput;
   }
 
   getPaymentSelect(): Locator {

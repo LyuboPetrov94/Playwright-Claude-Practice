@@ -65,7 +65,6 @@ export class DynamicPaginationTablePage {
   // ─── Search ──────────────────────────────────────────────────────────────────
 
   async search(text: string) {
-    await this.searchInput.clear();
     await this.searchInput.fill(text);
   }
 

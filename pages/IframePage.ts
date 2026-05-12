@@ -1,4 +1,4 @@
-import { Page, Locator, FrameLocator } from '@playwright/test';
+import { Page, Locator, FrameLocator, expect } from '@playwright/test';
 
 // Expected texts surfaced as exports so the spec can assert against them
 // without re-declaring strings.
@@ -47,8 +47,11 @@ export class IframePage {
   }
 
   async subscribe(email: string) {
-    await this.emailInput.clear();
     await this.emailInput.fill(email);
+    // `<input type="email">` strips leading/trailing whitespace per HTML spec,
+    // so the committed value is `email.trim()`. Asserting on the sanitized
+    // value still catches the Firefox fill→click commit race.
+    await expect(this.emailInput).toHaveValue(email.trim());
     await this.subscribeButton.click();
   }
 
