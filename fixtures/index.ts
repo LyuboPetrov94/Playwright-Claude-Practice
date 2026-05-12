@@ -11,7 +11,33 @@ type CustomFixtures = {
   apiContext: APIRequestContext;
 };
 
+// Ad / analytics / consent-dialog hosts blocked on every page.
+// Matches a real user with an ad blocker installed (~99% of users).
+// Removes the layout-shift races the practice site's DoubleClick iframes
+// cause in Firefox, and the Funding Choices consent dialog.
+const BLOCKED_HOSTS = [
+  'doubleclick.net',
+  'googlesyndication.com',
+  'googletagservices.com',
+  'googletagmanager.com',
+  'google-analytics.com',
+  'adservice.google.com',
+  'adnxs.com',
+  'fundingchoicesmessages.google.com',
+];
+
 export const test = base.extend<CustomFixtures>({
+  page: async ({ page }, use) => {
+    await page.route('**/*', (route) => {
+      const host = new URL(route.request().url()).hostname;
+      if (BLOCKED_HOSTS.some((ad) => host === ad || host.endsWith(`.${ad}`))) {
+        return route.abort();
+      }
+      return route.continue();
+    });
+    await use(page);
+  },
+
   // apiContext is set up before each test and torn down after
   apiContext: async ({}, use) => {
     const context = await request.newContext({
