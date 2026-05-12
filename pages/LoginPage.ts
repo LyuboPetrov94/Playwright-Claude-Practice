@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class LoginPage {
   private readonly usernameInput: Locator;
@@ -28,12 +28,10 @@ export class LoginPage {
   }
 
   async login(username: string, password: string) {
-    // Use clear() before fill() to ensure the field is truly empty across all browsers,
-    // particularly WebKit which handles fill('') differently on autocomplete fields.
-    await this.usernameInput.clear();
     await this.usernameInput.fill(username);
-    await this.passwordInput.clear();
+    await expect(this.usernameInput).toHaveValue(username);
     await this.passwordInput.fill(password);
+    await expect(this.passwordInput).toHaveValue(password);
     await this.submitButton.click();
   }
 

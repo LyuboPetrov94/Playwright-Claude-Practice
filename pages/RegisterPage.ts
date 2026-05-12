@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class RegisterPage {
   private readonly usernameInput: Locator;
@@ -20,12 +20,12 @@ export class RegisterPage {
   }
 
   async register(username: string, password: string, confirmPassword: string) {
-    await this.usernameInput.clear();
     await this.usernameInput.fill(username);
-    await this.passwordInput.clear();
+    await expect(this.usernameInput).toHaveValue(username);
     await this.passwordInput.fill(password);
-    await this.confirmPasswordInput.clear();
+    await expect(this.passwordInput).toHaveValue(password);
     await this.confirmPasswordInput.fill(confirmPassword);
+    await expect(this.confirmPasswordInput).toHaveValue(confirmPassword);
     await this.registerButton.click();
   }
 

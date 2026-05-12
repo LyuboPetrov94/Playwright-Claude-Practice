@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 
 export class OtpLoginPage {
   // Email entry screen
@@ -33,8 +33,11 @@ export class OtpLoginPage {
   }
 
   async submitEmail(email: string) {
-    await this.emailInput.clear();
     await this.emailInput.fill(email);
+    // `<input type="email">` strips leading/trailing whitespace per HTML spec,
+    // so the committed value is `email.trim()`. Asserting on the sanitized
+    // value still catches the Firefox fill→click commit race.
+    await expect(this.emailInput).toHaveValue(email.trim());
     await this.sendOtpButton.click();
   }
 
@@ -43,8 +46,8 @@ export class OtpLoginPage {
   }
 
   async submitOtp(otp: string) {
-    await this.otpInput.clear();
     await this.otpInput.fill(otp);
+    await expect(this.otpInput).toHaveValue(otp);
     await this.verifyOtpButton.click();
   }
 
