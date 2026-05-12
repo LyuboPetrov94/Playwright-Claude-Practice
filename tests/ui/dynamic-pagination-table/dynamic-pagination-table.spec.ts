@@ -41,7 +41,7 @@ test.describe('Dynamic Pagination Table', () => {
 
   test('TC01 - Default state: 3 rows visible, page 1 active, Previous disabled, Next enabled', async () => {
     // Equivalence Partitioning: initial page load state
-    expect(await tablePage.getVisibleRowCount()).toBe(3);
+    await expect(tablePage.getTableRows()).toHaveCount(3);
     await expect(tablePage.getActivePageNumber()).toHaveText('1');
     await expect(tablePage.getPreviousButton()).toHaveClass(/disabled/);
     await expect(tablePage.getNextButton()).not.toHaveClass(/disabled/);
@@ -52,7 +52,7 @@ test.describe('Dynamic Pagination Table', () => {
     await tablePage.clickNext();
 
     await expect(tablePage.getActivePageNumber()).toHaveText('2');
-    expect(await tablePage.getVisibleRowCount()).toBe(3);
+    await expect(tablePage.getTableRows()).toHaveCount(3);
     await expect(tablePage.getPreviousButton()).not.toHaveClass(/disabled/);
 
     // Verify these are different rows (page 2 = names at index 3–5)
@@ -67,7 +67,7 @@ test.describe('Dynamic Pagination Table', () => {
     await expect(tablePage.getActivePageNumber()).toHaveText('4');
     await expect(tablePage.getNextButton()).toHaveClass(/disabled/);
     await expect(tablePage.getPreviousButton()).not.toHaveClass(/disabled/);
-    expect(await tablePage.getVisibleRowCount()).toBe(1);
+    await expect(tablePage.getTableRows()).toHaveCount(1);
 
     const names = await tablePage.getColumnValues('Student Name');
     expect(names).toEqual(['Sophia Anderson']);
@@ -110,7 +110,7 @@ test.describe('Dynamic Pagination Table', () => {
     // Equivalence Partitioning: change page size
     await tablePage.selectRowsPerPage('5');
 
-    expect(await tablePage.getVisibleRowCount()).toBe(5);
+    await expect(tablePage.getTableRows()).toHaveCount(5);
     await expect(tablePage.getInfoText()).toHaveText('Showing 1 to 5 of 10 entries');
   });
 
@@ -118,7 +118,7 @@ test.describe('Dynamic Pagination Table', () => {
     // Boundary Value: page size equals total rows
     await tablePage.selectRowsPerPage('10');
 
-    expect(await tablePage.getVisibleRowCount()).toBe(10);
+    await expect(tablePage.getTableRows()).toHaveCount(10);
     await expect(tablePage.getPreviousButton()).toHaveClass(/disabled/);
     await expect(tablePage.getNextButton()).toHaveClass(/disabled/);
     await expect(tablePage.getInfoText()).toHaveText('Showing 1 to 10 of 10 entries');
@@ -128,7 +128,7 @@ test.describe('Dynamic Pagination Table', () => {
     // Equivalence Partitioning: "All" option
     await tablePage.selectRowsPerPage('-1');
 
-    expect(await tablePage.getVisibleRowCount()).toBe(10);
+    await expect(tablePage.getTableRows()).toHaveCount(10);
     await expect(tablePage.getPreviousButton()).toHaveClass(/disabled/);
     await expect(tablePage.getNextButton()).toHaveClass(/disabled/);
   });
@@ -136,11 +136,11 @@ test.describe('Dynamic Pagination Table', () => {
   test('TC10 - Change from All back to 3: pagination reappears with 4 pages', async () => {
     // State Transition: All → 3 restores original pagination
     await tablePage.selectRowsPerPage('-1');
-    expect(await tablePage.getVisibleRowCount()).toBe(10);
+    await expect(tablePage.getTableRows()).toHaveCount(10);
 
     await tablePage.selectRowsPerPage('3');
 
-    expect(await tablePage.getVisibleRowCount()).toBe(3);
+    await expect(tablePage.getTableRows()).toHaveCount(3);
     await expect(tablePage.getActivePageNumber()).toHaveText('1');
     await expect(tablePage.getNextButton()).not.toHaveClass(/disabled/);
   });

@@ -86,10 +86,6 @@ export class DynamicPaginationTablePage {
 
   // ─── Table Data ──────────────────────────────────────────────────────────────
 
-  async getVisibleRowCount(): Promise<number> {
-    return this.tableRows.count();
-  }
-
   /** Returns visible cell values for a given column name. */
   async getColumnValues(columnName: string): Promise<string[]> {
     const headers = await this.tableHeaders.allTextContents();
