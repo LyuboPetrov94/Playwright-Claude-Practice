@@ -111,13 +111,13 @@ test.describe('Web Inputs', () => {
     // Equivalence class: invalid date partition.
     // pressSequentially bypasses Playwright's format validation on date inputs.
     // Browser-defined outcome differs:
-    //  - Chromium / WebKit: normalise out-of-range parts → last valid day of the year.
-    //  - Firefox:           reject each invalid segment; only the year commits,
+    //  - Chromium:          normalises out-of-range parts → last valid day of the year.
+    //  - Firefox / WebKit:  reject each invalid segment; only the year commits,
     //                       so input.value remains empty and the output stays blank.
     await inputsPage.pressDateSequentially('15/35/2024');
     await inputsPage.clickDisplay();
 
-    if (browserName === 'firefox') {
+    if (browserName === 'firefox' || browserName === 'webkit') {
       await expect(inputsPage.getDateOutput()).toHaveText('');
     } else {
       await expect(inputsPage.getDateOutput()).toHaveText('2024-12-31');
