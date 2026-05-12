@@ -171,7 +171,7 @@ test.describe('Tooltips — /tooltips', () => {
     await expect(tooltipsPage.getTooltip()).toBeAttached();
   });
 
-  test('TC17 - Click another button or outside the buttons hides the focused tooltip', async ({ page }) => {
+  test('TC17 - Click another button or outside the buttons hides the focused tooltip', async () => {
     // Bootstrap 5 strips the `title` attribute the first time it shows a
     // tooltip on an element (so the browser doesn't render its own native
     // tooltip alongside Bootstrap's). Read both originals *before* any
@@ -196,9 +196,8 @@ test.describe('Tooltips — /tooltips', () => {
     await expect(tooltipsPage.getTooltip()).toHaveCount(1);
     await expect(tooltipsPage.getTooltipInner()).toHaveText(btn2Title!);
 
-    // Click an out-of-button element. The page H1 is always present and
-    // is not itself a tooltip trigger.
-    await page.locator('main h1').click();
+    // Click an out-of-button element to dismiss the tooltip.
+    await tooltipsPage.clickOutside();
     await expect(tooltipsPage.getTooltip()).not.toBeAttached();
   });
 });

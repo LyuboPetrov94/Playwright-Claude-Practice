@@ -60,4 +60,13 @@ export class TooltipsPage {
   async leaveButtons() {
     await this.page.mouse.move(0, 0);
   }
+
+  /**
+   * Click an out-of-button element to dismiss any currently-open tooltip.
+   * The page H1 is always present and is not itself a tooltip trigger,
+   * making it a reliable "click outside" target.
+   */
+  async clickOutside() {
+    await this.page.locator('main h1').click();
+  }
 }
