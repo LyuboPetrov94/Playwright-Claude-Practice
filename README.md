@@ -77,7 +77,8 @@ npm run report
 | Chromium         | Desktop  | Enabled |
 | Firefox          | Desktop  | Enabled |
 | WebKit (Safari)  | Desktop  | Enabled |
-| Mobile Chrome    | Pixel 5  | Enabled |
+
+Mobile projects (`mobile-chrome`, `mobile-safari`) are intentionally excluded. The practice site is not responsively designed — below desktop breakpoints the layout reflows into a partially-broken state that doesn't represent any real mobile user experience, so mobile tests would only assert against accidental behaviour. If the SUT ever gains a real responsive design, re-add the projects in `playwright.config.ts`.
 
 ## Architecture
 
