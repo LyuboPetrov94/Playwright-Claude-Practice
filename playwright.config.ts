@@ -16,8 +16,9 @@ export default defineConfig({
   // Fail the build on CI if test.only() was accidentally left in
   forbidOnly: !!process.env.CI,
 
-  // Retry failed tests once on CI, no retries locally
-  retries: process.env.CI ? 1 : 0,
+  // Retry failed tests once (local + CI). Artifacts are kept only when the
+  // retry also fails — see `use.trace` / `use.video` below.
+  retries: 1,
 
   // Number of parallel workers (adjust based on your machine)
   workers: process.env.CI ? 2 : 4,
@@ -30,14 +31,14 @@ export default defineConfig({
     // Base URL for the practice site
     baseURL: process.env.BASE_URL || 'https://practice.expandtesting.com',
 
-    // Capture screenshot only on failure
+    // All three artifact types use *-on-failure semantics: Playwright records
+    // them for every attempt, then discards if the test ultimately passes
+    // (e.g. fails first, succeeds on retry). They are retained only when the
+    // final outcome is failed — i.e. both the initial attempt and the retry
+    // failed. Keeps test-results/ clean across flaky retried-and-passed runs.
     screenshot: 'only-on-failure',
-
-    // Record video only on failure
     video: 'retain-on-failure',
-
-    // Collect trace on first retry (useful for debugging CI failures)
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
   },
 
   projects: [
@@ -56,15 +57,10 @@ export default defineConfig({
     },
 
     // --- Mobile Viewports ---
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    // mobile-safari disabled — practice site times out consistently on WebKit mobile
-    // {
-    //   name: 'mobile-safari',
-    //   use: { ...devices['iPhone 13'] },
-    // },
+    // Intentionally omitted. The practice site (practice.expandtesting.com)
+    // does not have a responsive design — viewports below desktop breakpoints
+    // reflow into a partially-broken layout that doesn't reflect any real
+    // mobile user experience. See README.md "Browser Coverage" for context.
 
     // --- API Tests (no browser needed) ---
     {
