@@ -19,6 +19,12 @@ export class IframePage {
 
   async goto() {
     await this.page.goto('/iframe', { waitUntil: 'domcontentloaded' });
+    // The email-subscribe iframe's inline submit handler is attached by a
+    // script at the end of the iframe body. Wait for the iframe's load event
+    // to guarantee that script has run before any test clicks submit.
+    const iframeEl = await this.page.waitForSelector('#email-subscribe');
+    const subscribeFrame = await iframeEl.contentFrame();
+    await subscribeFrame?.waitForLoadState('load');
   }
 
   getHeading(): Locator {
