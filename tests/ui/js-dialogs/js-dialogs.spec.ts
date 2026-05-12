@@ -96,12 +96,12 @@ test.describe('JavaScript Dialogs', () => {
 
   // ── Prompt: input robustness ──────────────────────────────────────────────
 
-  test('TC08 - HTML tags in prompt input are rendered as HTML, not escaped (vulnerability pin)', async ({ page }) => {
+  test('TC08 - HTML tags in prompt input are rendered as HTML, not escaped (vulnerability pin)', async () => {
     // log() uses innerHTML = msg, so <b>bold text</b> becomes a real <b> child.
     // If someone later switches to textContent this test will flag the change.
     await jsDialogsPage.triggerPrompt({ accept: true, text: '<b>bold text</b>' });
 
-    const boldChild = page.locator('#dialog-response b');
+    const boldChild = jsDialogsPage.getDialogResponseChild('b');
     await expect(boldChild).toHaveCount(1);
     await expect(boldChild).toHaveText('bold text');
     await expect(jsDialogsPage.getDialogResponse()).toHaveText('bold text');
@@ -115,8 +115,7 @@ test.describe('JavaScript Dialogs', () => {
       text: "<script>window.__xssFired = true</script>",
     });
 
-    const scriptChild = page.locator('#dialog-response script');
-    await expect(scriptChild).toHaveCount(1);
+    await expect(jsDialogsPage.getDialogResponseChild('script')).toHaveCount(1);
 
     const flag = await page.evaluate(() => (window as unknown as { __xssFired?: boolean }).__xssFired);
     expect(flag).toBeUndefined();
@@ -143,43 +142,35 @@ test.describe('JavaScript Dialogs', () => {
     await expect(jsDialogsPage.getDialogResponse()).toHaveText(input);
   });
 
-  test('TC13 - Prompt preserves whitespace-only input', async ({ page }) => {
+  test('TC13 - Prompt preserves whitespace-only input', async () => {
     // toHaveText normalises whitespace, so it cannot distinguish '   ' from ''.
-    // Poll raw textContent to assert the exact three-space string.
+    // toHaveJSProperty('textContent', ...) auto-retries and reads the raw
+    // textContent IDL attribute without normalisation, so the exact
+    // three-space string is asserted verifiably.
     await jsDialogsPage.triggerPrompt({ accept: true, text: '   ' });
 
-    await expect
-      .poll(async () => await page.locator('#dialog-response').textContent())
-      .toBe('   ');
+    await expect(jsDialogsPage.getDialogResponse()).toHaveJSProperty('textContent', '   ');
   });
 
   // ── Prompt length: 3-point BVA around 1000 chars ──────────────────────────
 
-  test('TC14 - Prompt with 999 chars (below boundary) is rendered in full', async ({ page }) => {
-    const input = 'a'.repeat(999);
-    await jsDialogsPage.triggerPrompt({ accept: true, text: input });
+  test('TC14 - Prompt with 999 chars (below boundary) is rendered in full', async () => {
+    await jsDialogsPage.triggerPrompt({ accept: true, text: 'a'.repeat(999) });
 
-    await expect
-      .poll(async () => (await page.locator('#dialog-response').textContent())?.length)
-      .toBe(999);
+    // Exact-length regex — no whitespace concerns since the payload is all 'a'.
+    await expect(jsDialogsPage.getDialogResponse()).toHaveText(/^a{999}$/);
   });
 
-  test('TC15 - Prompt with 1000 chars (at boundary) is rendered in full', async ({ page }) => {
-    const input = 'a'.repeat(1000);
-    await jsDialogsPage.triggerPrompt({ accept: true, text: input });
+  test('TC15 - Prompt with 1000 chars (at boundary) is rendered in full', async () => {
+    await jsDialogsPage.triggerPrompt({ accept: true, text: 'a'.repeat(1000) });
 
-    await expect
-      .poll(async () => (await page.locator('#dialog-response').textContent())?.length)
-      .toBe(1000);
+    await expect(jsDialogsPage.getDialogResponse()).toHaveText(/^a{1000}$/);
   });
 
-  test('TC16 - Prompt with 1001 chars (above boundary) is rendered without truncation', async ({ page }) => {
-    const input = 'a'.repeat(1001);
-    await jsDialogsPage.triggerPrompt({ accept: true, text: input });
+  test('TC16 - Prompt with 1001 chars (above boundary) is rendered without truncation', async () => {
+    await jsDialogsPage.triggerPrompt({ accept: true, text: 'a'.repeat(1001) });
 
-    await expect
-      .poll(async () => (await page.locator('#dialog-response').textContent())?.length)
-      .toBe(1001);
+    await expect(jsDialogsPage.getDialogResponse()).toHaveText(/^a{1001}$/);
   });
 
   // ── Cross-dialog behaviour ────────────────────────────────────────────────

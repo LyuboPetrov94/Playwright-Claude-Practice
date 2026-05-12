@@ -27,20 +27,16 @@ export class JsDialogsPage {
     await this.page.reload({ waitUntil: 'domcontentloaded' });
   }
 
-  getAlertButton(): Locator {
-    return this.alertButton;
-  }
-
-  getConfirmButton(): Locator {
-    return this.confirmButton;
-  }
-
-  getPromptButton(): Locator {
-    return this.promptButton;
-  }
-
   getDialogResponse(): Locator {
     return this.dialogResponse;
+  }
+
+  // Returns a Locator scoped to a child element of #dialog-response by tag.
+  // Used by tests that assert the response field rendered injected HTML
+  // (e.g. <b> from "<b>bold</b>", <script> from injected script tags) —
+  // see js-dialogs.spec.ts TC08 / TC09.
+  getDialogResponseChild(tag: string): Locator {
+    return this.dialogResponse.locator(tag);
   }
 
   async triggerAlert(opts: DialogAction = { accept: true }): Promise<Dialog> {
