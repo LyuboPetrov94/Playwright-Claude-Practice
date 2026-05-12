@@ -124,7 +124,6 @@ export class LocatorsPage {
   }
 
   async fillNewsletterEmail(email: string) {
-    await this.newsletterEmail.clear();
     await this.newsletterEmail.fill(email);
   }
 
@@ -134,17 +133,11 @@ export class LocatorsPage {
     return this.searchInput;
   }
 
-  async fillSearchInput(text: string) {
-    await this.searchInput.clear();
-    await this.searchInput.fill(text);
-  }
-
   getFilterInput(): Locator {
     return this.filterInput;
   }
 
   async fillFilterInput(text: string) {
-    await this.filterInput.clear();
     await this.filterInput.fill(text);
   }
 
