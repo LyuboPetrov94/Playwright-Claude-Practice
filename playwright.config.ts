@@ -66,10 +66,9 @@ export default defineConfig({
     {
       name: 'api',
       testDir: './tests/api',
-      use: {
-        // API tests don't need a browser context
-        baseURL: process.env.API_BASE_URL || 'https://practice.expandtesting.com/api',
-      },
+      // Inherits global baseURL ('https://practice.expandtesting.com'); service
+      // wrappers carry the full path (e.g. '/notes/api/health-check') so each
+      // service is self-documenting against the Notes API Swagger.
     },
   ],
 });
