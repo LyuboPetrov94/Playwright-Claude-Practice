@@ -6,12 +6,21 @@ export interface RegisterPayload {
   password: string;
 }
 
+export interface LoginPayload {
+  email: string;
+  password: string;
+}
+
 export class UserService {
   private readonly endpoint = "/notes/api/users";
 
   constructor(private readonly request: APIRequestContext) {}
 
-  async register({ name, email, password }: RegisterPayload): Promise<APIResponse> {
+  async register({
+    name,
+    email,
+    password,
+  }: RegisterPayload): Promise<APIResponse> {
     // form (not data): Notes API expects application/x-www-form-urlencoded per
     // Swagger (in: formData) — JSON bodies return 400. The inline literal
     // satisfies Playwright's index-signature typing for `form`; passing the
@@ -19,5 +28,15 @@ export class UserService {
     return this.request.post(`${this.endpoint}/register`, {
       form: { name, email, password },
     });
+  }
+
+  async login({ email, password }: LoginPayload): Promise<APIResponse> {
+    return this.request.post(`${this.endpoint}/login`, {
+      form: { email, password },
+    });
+  }
+
+  async getProfile(): Promise<APIResponse> {
+    return this.request.get(`${this.endpoint}/profile`);
   }
 }
