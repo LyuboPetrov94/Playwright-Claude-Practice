@@ -5,7 +5,8 @@
 
 export function randomEmail(): string {
   const timestamp = Date.now();
-  return `testuser_${timestamp}@example.com`;
+  const suffix = Math.random().toString(36).substring(2, 8);
+  return `testuser_${timestamp}_${suffix}@example.com`;
 }
 
 export function randomUsername(): string {
@@ -14,7 +15,7 @@ export function randomUsername(): string {
 }
 
 export function randomString(length = 8): string {
-  let result = '';
+  let result = "";
   while (result.length < length) {
     result += Math.random().toString(36).substring(2);
   }
