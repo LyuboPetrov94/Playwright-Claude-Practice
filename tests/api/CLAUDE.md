@@ -1,0 +1,42 @@
+# API Test Instructions
+
+Applies to tests under `tests/api/` and their service wrappers in `services/`. Complements the root `CLAUDE.md` — read both. Claude Code auto-loads this file when working within this subtree.
+
+## API Conventions
+- Service wrappers live in `services/`. Endpoint paths and HTTP verbs belong in services, never in spec files. Service is the API equivalent of a Page Object Model.
+- Specs use the `request` fixture (`async ({ request }) => {...}`) — not `page.request`. API specs do not need a browser; the `api` project in `playwright.config.ts` runs them without one.
+- Test file path: `tests/api/<resource>/<feature>.spec.ts` (e.g. `tests/api/users/register.spec.ts`). Group by resource (Users, Notes, Health), not by lesson.
+- `baseURL` is the origin only (`https://practice.expandtesting.com`, inherited from the global `use.baseURL`). Service paths carry the full `/notes/api/<resource>` prefix so each service is self-documenting against the Swagger.
+- For per-verb HTTP methods use `request.get/post/put/patch/delete`. Use `request.fetch(url, { method })` only when the verb is dynamic (negative tests, parameterised loops). See `tests/api/health/health.spec.ts` TC02-TC05 for the dynamic-verb pattern.
+- **Notes API request bodies are form data, not JSON** — see the gotcha below.
+
+## Service Design Rules
+- Service constructor takes `APIRequestContext` via DI and stores it `private readonly`.
+- The endpoint path is stored as `private readonly endpoint = '/notes/api/<resource>'` at the top of the class — single source of truth, never duplicated across methods.
+- Public methods return `Promise<APIResponse>`. **Do not** pre-parse or assert on the response inside the service — spec owns assertion logic. The one acceptable exception is when a method's purpose is "do X and return the resulting id" for chaining setup (e.g. `register()` returning the new user id) — even then, prefer returning the full response and have the spec extract.
+- Methods accept arguments in the order they appear in the API contract (path params → required form fields → optional fields). Group multi-field bodies into a single object parameter when there are more than three fields.
+- A negative-path method that needs to send a non-standard verb (e.g. `sendWithMethod()` on `HealthService`) uses `request.fetch(this.endpoint, { method })` rather than a switch over per-verb methods.
+
+## Assertion Preferences (API-specific)
+- HTTP-layer status: `expect(response.status()).toBe(N)`. Note `status()` is a function call, not a property.
+- Body: `const body = await response.json(); expect(body.success).toBe(true);` — and always pin at least one more field beyond `success` (the `status` mirror, `message`, or a `data` value), so a regression that returns `{ success: true }` with an empty payload doesn't silently pass.
+- **No auto-retrying assertions** for API responses. `toHaveText`, `toBeVisible`, `toHaveValue` are UI assertions tied to a `Locator`. An API response is a fixed snapshot — there is nothing to retry against. Use plain `expect(value).toBe(expected)` / `toEqual()` / `toMatchObject()`.
+- For genuinely async API state (e.g. waiting for a background job's status field to flip), use `expect.poll(() => fetchStatus(), { timeout: N }).toBe('done')`. Reserved for that case — do not reach for `expect.poll` when an immediate assertion will do.
+- For empty or non-JSON bodies (e.g. HTML 404 pages) assert status only. Do not assert on HTML body strings — coupling to the error-page framework is fragile.
+
+## Known Gotchas (learned from the Notes API)
+
+- **404 (not 405) for wrong verb on a valid path**: The Notes API has no custom Method-Not-Allowed handler. Sending POST/PUT/PATCH/DELETE to a GET-only endpoint returns `404` with an HTML body (the framework's default error page), not `405 Method Not Allowed` with JSON. Per HTTP semantics 405 would be correct, but this is what the API actually does — assert `status === 404` and skip the body. See `tests/api/health/health.spec.ts` TC02-TC05.
+- **Form data, not JSON**: Every Notes API endpoint with a request body uses `application/x-www-form-urlencoded` (Swagger 2.0 `in: formData`), not `application/json`. Use Playwright's `{ form: { ... } }` option, **not** `{ data: { ... } }`. Sending JSON typically returns 400. The spec at `https://practice.expandtesting.com/notes/api/swagger.json` is authoritative — every body field on every endpoint is `in: formData`.
+- **Auth header is `x-auth-token`** (lowercase per spec). HTTP headers are case-insensitive on the wire, but pin the spelling exactly in the authed-request fixture so a future contributor's `X-Auth-Token` doesn't drift the convention. Returned by `POST /users/login` in `data.token`.
+- **`PATCH /notes/{id}` is a completion toggle, not a partial update**: It accepts only `{ completed: boolean }`. To change `title`/`description`/`category` you must `PUT` the full resource. State-transition tests use PATCH for "mark complete/incomplete" transitions only — never for arbitrary partial updates.
+- **`DELETE` is the verb for `/users/logout` and `/users/delete-account`**: Both use DELETE. Treating the session/token as a resource ("destroy this token") is a defensible REST style; do not second-guess and do not write tests that try POST as the happy path.
+- **`data.id` is a MongoDB ObjectId string, despite the Swagger example showing an integer**: The `POST /users/register` Swagger example shows `"id": 6` (integer), but the live API returns `data.id` as a 24-character lowercase-hex MongoDB ObjectId (e.g. `"6a05c64403893502965e5a7a"`). The same is true on `POST /users/login` and all `/notes/{id}` responses — ids are strings everywhere. Assert `expect.any(String)`, or `toMatch(/^[a-f0-9]{24}$/)` for a strict format check; never `expect.any(Number)` and never `toBe(<numeric literal>)`. The Swagger example field is **not authoritative** — only the live response is. This is the positive-path equivalent of the Swagger-incomplete gotcha below: the spec lies about response shapes too, not just status codes. Discovered in L3 when TC01's `expect.any(Number)` assertion (built off the Swagger example) failed against the live response.
+- **Swagger is incomplete; probe negative paths empirically**: The Notes API's Swagger documents only a subset of the response codes endpoints actually return. `POST /users/register` lists only `201` and `400` in the spec, but also returns **`409`** with the message `"An account already exists with the same email address"` when the email is taken. The 400 responses themselves are field-specific (e.g. `"Password must be between 6 and 30 characters"`, `"A valid email address is required"`, `"User name must be between 4 and 30 characters"`) rather than a generic `"Invalid input data"` — these messages are stable enough to assert with `expect(body.message).toBe(...)`. Treat the Swagger as a starting hint, not a complete contract: for every endpoint, probe each negative path empirically and lock both the status code and the exact `message` text. This is the rationale behind the root `CLAUDE.md` "inspect the target" workflow.
+
+## API-Specific What NOT to Do
+- Do not write endpoint paths or HTTP verbs directly in spec files — abstract through service wrappers in `services/`.
+- Do not use `{ data: { ... } }` (JSON) on Notes API POST/PUT/PATCH — use `{ form: { ... } }`. The API expects form-encoded bodies.
+- Do not assert on the body of 4xx responses without inspecting the body first — they may be HTML, not JSON, and the assertion will throw on `await response.json()`.
+- Do not use auto-retrying `Locator` assertions on API responses — they were designed for DOM polling and do not apply.
+- Do not test forgot-password / verify-reset-password-token / reset-password end-to-end — the flow requires retrieving a token from an email inbox that the practice site does not expose. Out of scope, documented in TODO.md.
