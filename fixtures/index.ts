@@ -1,4 +1,6 @@
-import { test as base, APIRequestContext, request } from '@playwright/test';
+import { test as base, APIRequestContext, request } from "@playwright/test";
+import { UserService } from "../services/UserService";
+import { randomEmail, randomString, randomUsername } from "../helpers/data";
 
 /**
  * Custom fixtures extend Playwright's base `test` object.
@@ -6,29 +8,41 @@ import { test as base, APIRequestContext, request } from '@playwright/test';
  * and injected automatically into any test that declares them.
  */
 
-type CustomFixtures = {
-  // A pre-authenticated API context (reusable across API tests)
-  apiContext: APIRequestContext;
-};
+/**
+ * authedRequest — worker-scoped APIRequestContext pre-loaded with x-auth-token.
+ *
+ * Usage:
+ *   test("...", async ({ authedRequest }) => {
+ *     const users = new UserService(authedRequest);
+ *     const res = await users.getProfile();
+ *     expect(res.status()).toBe(200);
+ *   });
+ */
 
 // Ad / analytics / consent-dialog hosts blocked on every page.
 // Matches a real user with an ad blocker installed (~99% of users).
 // Removes the layout-shift races the practice site's DoubleClick iframes
 // cause in Firefox, and the Funding Choices consent dialog.
 const BLOCKED_HOSTS = [
-  'doubleclick.net',
-  'googlesyndication.com',
-  'googletagservices.com',
-  'googletagmanager.com',
-  'google-analytics.com',
-  'adservice.google.com',
-  'adnxs.com',
-  'fundingchoicesmessages.google.com',
+  "doubleclick.net",
+  "googlesyndication.com",
+  "googletagservices.com",
+  "googletagmanager.com",
+  "google-analytics.com",
+  "adservice.google.com",
+  "adnxs.com",
+  "fundingchoicesmessages.google.com",
 ];
 
-export const test = base.extend<CustomFixtures>({
+const BASE_URL = "https://practice.expandtesting.com";
+
+type WorkerFixtures = {
+  authedRequest: APIRequestContext;
+};
+
+export const test = base.extend<{}, WorkerFixtures>({
   page: async ({ page }, use) => {
-    await page.route('**/*', (route) => {
+    await page.route("**/*", (route) => {
       const host = new URL(route.request().url()).hostname;
       if (BLOCKED_HOSTS.some((ad) => host === ad || host.endsWith(`.${ad}`))) {
         return route.abort();
@@ -38,24 +52,38 @@ export const test = base.extend<CustomFixtures>({
     await use(page);
   },
 
-  // apiContext is set up before each test and torn down after
-  apiContext: async ({}, use) => {
-    const context = await request.newContext({
-      baseURL: process.env.API_BASE_URL || 'https://your-api.com',
-      extraHTTPHeaders: {
-        'Content-Type': 'application/json',
-        // Add auth headers here, e.g.:
-        // 'Authorization': `Bearer ${process.env.API_TOKEN}`,
-      },
-    });
+  authedRequest: [
+    async ({}, use) => {
+      // Setup: register a fresh user, then login to get a token.
+      // Two contexts: setupContext is unauthenticated (used for register + login);
+      // authed carries the token in extraHTTPHeaders for every subsequent call.
+      const email = randomEmail();
+      const password = randomString(10);
+      const name = randomUsername();
 
-    // Hand the context to the test
-    await use(context);
+      const setupContext = await request.newContext({ baseURL: BASE_URL });
+      const users = new UserService(setupContext);
+      await users.register({ name, email, password });
+      const loginRes = await users.login({ email, password });
+      const token = (await loginRes.json()).data.token;
+      await setupContext.dispose();
 
-    // Cleanup after the test finishes
-    await context.dispose();
-  },
+      const authed = await request.newContext({
+        baseURL: BASE_URL,
+        extraHTTPHeaders: { "x-auth-token": token },
+      });
+
+      await use(authed);
+
+      // Teardown: delete the test account so the practice site doesn't accumulate
+      // one worker-fixture user per CI run
+      await authed.delete("/notes/api/users/delete-account");
+
+      await authed.dispose();
+    },
+    { scope: "worker" },
+  ],
 });
 
 // Re-export expect so tests only need to import from this file
-export { expect } from '@playwright/test';
+export { expect } from "@playwright/test";
