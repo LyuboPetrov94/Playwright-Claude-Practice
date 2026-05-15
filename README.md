@@ -14,18 +14,31 @@ An end-to-end and API testing framework built with [Playwright](https://playwrig
 playwright-framework/
 ├── tests/
 │   ├── ui/                        # UI tests grouped by feature
-│   │   ├── login/
-│   │   ├── register/
-│   │   ├── forgot-password/
-│   │   ├── otp-login/
-│   │   ├── inputs/
-│   │   ├── radio-buttons/
-│   │   ├── locators/
+│   │   ├── add-remove-elements/
+│   │   ├── checkboxes/
+│   │   ├── console-logs/
 │   │   ├── drag-and-drop/
 │   │   ├── drag-and-drop-circles/
+│   │   ├── dynamic-pagination-table/
 │   │   ├── dynamic-table/
-│   │   └── dynamic-pagination-table/
+│   │   ├── file-download/
+│   │   ├── file-upload/
+│   │   ├── forgot-password/
+│   │   ├── form-validation/
+│   │   ├── hovers-tooltips/
+│   │   ├── http-auth/
+│   │   ├── iframe/
+│   │   ├── inputs/
+│   │   ├── js-dialogs/
+│   │   ├── key-presses/
+│   │   ├── locators/
+│   │   ├── login/
+│   │   ├── multiple-windows/
+│   │   ├── otp-login/
+│   │   ├── radio-buttons/
+│   │   └── register/
 │   └── api/                       # API tests
+│       ├── health/
 │       └── users/
 ├── pages/                         # Page Object Models
 ├── fixtures/                      # Custom Playwright fixtures
@@ -88,11 +101,10 @@ Each page under test has a corresponding class in `pages/` that encapsulates loc
 
 ### Fixtures
 
-Custom fixtures in `fixtures/index.ts` extend Playwright's base `test` object. This includes a pre-configured `apiContext` for API testing with the correct base URL and headers.
+Custom fixtures in `fixtures/index.ts` extend Playwright's base `test` object. This includes `authedRequest` — a worker-scoped `APIRequestContext` pre-loaded with the `x-auth-token` header, used by every authenticated API spec.
 
 ### Helpers
 
-- **`helpers/api.ts`** — Thin wrappers (`getJson`, `postJson`, `deleteResource`) around Playwright's `APIRequestContext`
 - **`helpers/data.ts`** — Test data generators (`randomEmail`, `randomUsername`, `randomString`, `randomInt`) to avoid collisions between test runs
 
 ## Test Design
