@@ -8,11 +8,19 @@
     "test:api": "playwright test tests/api",
     "test:headed": "playwright test --headed",
     "test:debug": "playwright test --debug",
-    "report": "playwright show-report"
+    "report": "playwright show-report",
+    "dashboard:server": "node dashboard-server.js",
+    "dashboard:ui": "cd dashboard-ui && npm start",
+    "dashboard": "concurrently \"npm run dashboard:server\" \"npm run dashboard:ui\""
   },
   "devDependencies": {
     "@playwright/test": "^1.43.0",
     "@types/node": "^20.0.0",
+    "concurrently": "^9.2.1",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
   }
 }
