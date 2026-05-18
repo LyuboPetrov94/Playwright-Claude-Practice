@@ -4,3 +4,5 @@ test-artifacts/
 playwright-report/
 blob-report/
 playwright/.cache/
+dashboard-ui
+dashboard-server.js
